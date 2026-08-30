@@ -26,18 +26,23 @@ export default function CreateLink() {
       return;
     }
 
+    let finalDestination = destination.trim();
+    if (!/^https?:\/\//i.test(finalDestination)) {
+      finalDestination = "https://" + finalDestination;
+    }
+
     const code = randomCode();
 
     const { error: insertError } = await supabase
       .from("links")
-      .insert({ code, destination_url: destination });
+      .insert({ code, destination_url: finalDestination });
 
     if (insertError) {
       setError(insertError.message);
       return;
     }
 
-    setShortUrl(`${window.location.origin}/x/${code}`);
+    setShortUrl(`${window.location.origin}/${code}`);
   }
 
   return (
@@ -64,4 +69,4 @@ export default function CreateLink() {
       )}
     </main>
   );
-    }
+  }
