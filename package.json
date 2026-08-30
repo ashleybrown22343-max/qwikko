@@ -2,6 +2,9 @@
   "name": "qwikko",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +15,7 @@
     "next": "14.2.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "qrcode": "^1.5.3"
+    "qrcode": "^1.5.3",
     "@supabase/supabase-js": "^2.45.0"
   }
 }
