@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-const RESERVED = ["generate", "create", "dashboard", "scan"];
+const RESERVED = ["generate", "create", "dashboard", "scan", "login"];
 
 function randomCode(length = 6) {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -19,6 +19,7 @@ export default function CreateLink() {
   const [customCode, setCustomCode] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [error, setError] = useState("");
+  const [isGuest, setIsGuest] = useState(true);
 
   async function handleCreate() {
     setError("");
@@ -41,32 +42,33 @@ export default function CreateLink() {
         setError("Custom code can only contain letters, numbers, and hyphens.");
         return;
       }
-
       if (RESERVED.includes(code.toLowerCase())) {
         setError(`"${code}" is reserved. Try a different code.`);
-        return;
-      }
-
-      const { data: existing } = await supabase
-        .from("links")
-        .select("code")
-        .eq("code", code)
-        .maybeSingle();
-
-      if (existing) {
-        setError(`"${code}" is already taken. Try a different one.`);
         return;
       }
     } else {
       code = randomCode();
     }
 
-    const { error: insertError } = await supabase
-      .from("links")
-      .insert({ code, destination_url: finalDestination, link_type: "url" });
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session ? session.user.id : null;
+    setIsGuest(!session);
+
+    const row = {
+      code,
+      destination_url: finalDestination,
+      link_type: "url",
+      user_id: userId,
+    };
+
+    const { error: insertError } = await supabase.from("links").insert(row);
 
     if (insertError) {
-      setError(insertError.message);
+      if (insertError.message.includes("duplicate") || insertError.code === "23505") {
+        setError(`"${code}" is already taken. Try a different one.`);
+      } else {
+        setError(insertError.message);
+      }
       return;
     }
 
@@ -98,10 +100,15 @@ export default function CreateLink() {
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       {shortUrl && (
-        <p style={{ marginTop: "16px" }}>
-          Your link: <a href={shortUrl}>{shortUrl}</a>
-        </p>
+        <div style={{ marginTop: "16px" }}>
+          <p>Your link: <a href={shortUrl}>{shortUrl}</a></p>
+          {isGuest && (
+            <p style={{ color: "#666", fontSize: "0.9rem" }}>
+              Sign in to manage, edit, or track this link later — otherwise it's guest-created and can't be recovered.
+            </p>
+          )}
+        </div>
       )}
     </main>
   );
-        }
+}
