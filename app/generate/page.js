@@ -2,19 +2,32 @@
 
 import { useState, useRef } from "react";
 import QRCode from "qrcode";
+import { supabase } from "../../lib/supabase";
 
 const TYPES = ["URL", "Text", "Email", "Phone", "WhatsApp", "WiFi", "vCard"];
+
+function randomCode(length = 6) {
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
 
 export default function Generate() {
   const [type, setType] = useState("URL");
   const [fields, setFields] = useState({});
+  const [trackable, setTrackable] = useState(false);
+  const [shortUrl, setShortUrl] = useState("");
+  const [error, setError] = useState("");
   const canvasRef = useRef(null);
 
   function updateField(key, value) {
     setFields({ ...fields, [key]: value });
   }
 
-  function buildContent() {
+  function buildRawContent() {
     switch (type) {
       case "URL":
         return fields.url || "";
@@ -41,12 +54,49 @@ END:VCARD`;
     }
   }
 
-  function generate() {
-    const content = buildContent();
-    if (!content) return;
+  async function drawQr(content) {
     QRCode.toCanvas(canvasRef.current, content, { width: 260 }, (err) => {
       if (err) console.error(err);
     });
+  }
+
+  async function generate() {
+    setError("");
+    setShortUrl("");
+
+    const rawContent = buildRawContent();
+    if (!rawContent) return;
+
+    if (!trackable) {
+      await drawQr(rawContent);
+      return;
+    }
+
+    // trackable: create a smart link, encode the short URL in the QR instead
+    const code = randomCode();
+    const isRedirectType = ["URL", "WhatsApp", "Phone", "Email"].includes(type);
+
+    const row = {
+      code,
+      link_type: type.toLowerCase(),
+    };
+
+    if (isRedirectType) {
+      row.destination_url = rawContent;
+    } else {
+      row.content = fields; // raw field data for Text/WiFi/vCard landing page
+    }
+
+    const { error: insertError } = await supabase.from("links").insert(row);
+
+    if (insertError) {
+      setError(insertError.message);
+      return;
+    }
+
+    const url = `${window.location.origin}/${code}`;
+    setShortUrl(url);
+    await drawQr(url);
   }
 
   function renderFields() {
@@ -100,13 +150,30 @@ END:VCARD`;
         {renderFields()}
       </div>
 
+      <label style={{ display: "block", marginTop: "12px" }}>
+        <input
+          type="checkbox"
+          checked={trackable}
+          onChange={(e) => setTrackable(e.target.checked)}
+        />{" "}
+        Make this a trackable smart link
+      </label>
+
       <button onClick={generate} style={{ marginTop: "16px" }}>
         Generate QR
       </button>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {shortUrl && (
+        <p style={{ marginTop: "12px" }}>
+          Smart link: <a href={shortUrl}>{shortUrl}</a>
+        </p>
+      )}
 
       <div style={{ marginTop: "24px" }}>
         <canvas ref={canvasRef}></canvas>
       </div>
     </main>
   );
-  }
+      }
