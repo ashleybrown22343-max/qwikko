@@ -1,8 +1,10 @@
+// app/login/page.js
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { Button, Card, Input, Alert } from "../components/ui";
 
 export default function Login() {
   const [mode, setMode] = useState("signin");
@@ -10,14 +12,17 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleEmailAuth() {
     setError("");
     setMessage("");
+    setLoading(true);
 
     if (!email || !password) {
       setError("Enter both email and password.");
+      setLoading(false);
       return;
     }
 
@@ -28,9 +33,11 @@ export default function Login() {
       });
       if (signUpError) {
         setError(signUpError.message);
+        setLoading(false);
         return;
       }
       setMessage("Check your email to confirm your account.");
+      setLoading(false);
     } else {
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
@@ -38,6 +45,7 @@ export default function Login() {
       });
       if (signInError) {
         setError(signInError.message);
+        setLoading(false);
         return;
       }
       router.push("/dashboard");
@@ -46,6 +54,7 @@ export default function Login() {
 
   async function handleGoogleAuth() {
     setError("");
+    setLoading(true);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -54,48 +63,50 @@ export default function Login() {
     });
     if (oauthError) {
       setError(oauthError.message);
+      setLoading(false);
     }
   }
 
   return (
-    <main style={{ padding: "24px", maxWidth: "360px" }}>
-      <h1>{mode === "signup" ? "Create account" : "Sign in"}</h1>
+    <main className="container" style={{ maxWidth: "400px", padding: "2rem", marginTop: "4rem" }}>
+      <h1 style={{ textAlign: "center" }}>{mode === "signup" ? "Create Account" : "Sign In"}</h1>
+      <Card style={{ marginTop: "1.5rem" }}>
+        <Input
+          label="Email"
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <Input
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        style={{ width: "100%", padding: "8px", marginTop: "8px" }}
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        style={{ width: "100%", padding: "8px", marginTop: "8px" }}
-      />
+        {error && <Alert type="error">{error}</Alert>}
+        {message && <Alert type="success">{message}</Alert>}
 
-      <button onClick={handleEmailAuth} style={{ marginTop: "12px", width: "100%" }}>
-        {mode === "signup" ? "Sign up" : "Sign in"}
-      </button>
+        <Button onClick={handleEmailAuth} variant="primary" disabled={loading} style={{ width: "100%" }}>
+          {loading ? "Please wait..." : mode === "signup" ? "Sign Up" : "Sign In"}
+        </Button>
 
-      <p style={{ marginTop: "8px" }}>
-        {mode === "signup" ? (
-          <>Already have an account? <a onClick={() => setMode("signin")} style={{ cursor: "pointer", color: "#2F6FED" }}>Sign in</a></>
-        ) : (
-          <>Need an account? <a onClick={() => setMode("signup")} style={{ cursor: "pointer", color: "#2F6FED" }}>Sign up</a></>
-        )}
-      </p>
+        <p style={{ textAlign: "center", marginTop: "1rem" }}>
+          {mode === "signup" ? (
+            <>Already have an account? <a onClick={() => setMode("signin")} style={{ cursor: "pointer", color: "var(--primary)" }}>Sign in</a></>
+          ) : (
+            <>Need an account? <a onClick={() => setMode("signup")} style={{ cursor: "pointer", color: "var(--primary)" }}>Sign up</a></>
+          )}
+        </p>
 
-      <hr style={{ margin: "16px 0" }} />
+        <hr style={{ margin: "1.5rem 0", border: "none", borderTop: "1px solid var(--border)" }} />
 
-      <button onClick={handleGoogleAuth} style={{ width: "100%" }}>
-        Continue with Google
-      </button>
-
-      {error && <p style={{ color: "red", marginTop: "12px" }}>{error}</p>}
-      {message && <p style={{ color: "green", marginTop: "12px" }}>{message}</p>}
+        <Button onClick={handleGoogleAuth} variant="secondary" disabled={loading} style={{ width: "100%" }}>
+          Continue with Google
+        </Button>
+      </Card>
     </main>
   );
 }
