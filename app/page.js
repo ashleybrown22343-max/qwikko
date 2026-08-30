@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <main
@@ -18,7 +20,6 @@ export default function Home() {
           padding: "32px 48px",
         }}
       >
-        {/* viewfinder corner brackets — a small nod to scanning a QR code */}
         <span style={cornerStyle("top", "left")} />
         <span style={cornerStyle("top", "right")} />
         <span style={cornerStyle("bottom", "left")} />
@@ -41,31 +42,46 @@ export default function Home() {
         QR codes + smart links — coming together right here.
       </p>
 
-      <div style={{ marginTop: "24px" }}>
-        <span
-          style={{
-            display: "inline-block",
-            background: "#2F6FED",
-            color: "#fff",
-            padding: "10px 20px",
-            borderRadius: "8px",
-            fontSize: "0.95rem",
-            fontWeight: 600,
-          }}
-        >
-          Scan. Share. Track.
-        </span>
-      </div>
+      <nav
+        style={{
+          marginTop: "32px",
+          display: "flex",
+          gap: "12px",
+          flexWrap: "wrap",
+          justifyContent: "center",
+        }}
+      >
+        <Link href="/generate" style={navLinkStyle}>
+          Generate QR
+        </Link>
+        <Link href="/create" style={navLinkStyle}>
+          Create smart link
+        </Link>
+        <Link href="/dashboard" style={navLinkStyle}>
+          Dashboard
+        </Link>
+      </nav>
     </main>
   );
 }
+
+const navLinkStyle = {
+  display: "inline-block",
+  background: "#2F6FED",
+  color: "#fff",
+  padding: "10px 20px",
+  borderRadius: "8px",
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  textDecoration: "none",
+};
 
 function cornerStyle(vertical, horizontal) {
   const size = "20px";
   const thickness = "3px";
   const color = "#FFB020";
 
-  const style = {
+  return {
     position: "absolute",
     width: size,
     height: size,
@@ -76,6 +92,4 @@ function cornerStyle(vertical, horizontal) {
     borderLeft: horizontal === "left" ? `${thickness} solid ${color}` : "none",
     borderRight: horizontal === "right" ? `${thickness} solid ${color}` : "none",
   };
-
-  return style;
-                                 }
+        }
