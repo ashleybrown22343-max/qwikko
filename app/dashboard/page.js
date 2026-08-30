@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { Button, Card, Badge, Alert, Input, Spinner } from "../../components/ui";
+import { Button, Card, Badge, Alert, Input, Spinner } from "../components/ui";
 
 export default function Dashboard() {
   const [links, setLinks] = useState([]);
