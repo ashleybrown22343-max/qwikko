@@ -1,16 +1,19 @@
-// app/scan/page.js
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
-import { Button, Card, Alert } from "../components/ui";
+import { Button, Card, Alert } from "../../components/ui";
+
+const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 
 export default function Scan() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [result, setResult] = useState("");
   const [error, setError] = useState("");
   const [scanning, setScanning] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const streamRef = useRef(null);
   const frameRef = useRef(null);
 
@@ -31,7 +34,7 @@ export default function Scan() {
       videoRef.current.play();
       frameRef.current = requestAnimationFrame(tick);
     } catch (err) {
-      setError("Camera access denied or unavailable.");
+      setError("Camera access denied or unavailable. You can upload an image instead.");
       setScanning(false);
     }
   }
@@ -69,7 +72,48 @@ export default function Scan() {
 
   function scanAgain() {
     setResult("");
+    setError("");
     startCamera();
+  }
+
+  // Handle file upload
+  async function handleFileUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size
+    if (file.size > MAX_FILE_SIZE) {
+      setError("File is too large. Maximum size is 1MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setError("");
+    setUploading(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = canvasRef.current;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code) {
+          setResult(code.data);
+          stopCamera();
+          setScanning(false);
+        } else {
+          setError("No QR code found in that image.");
+        }
+        setUploading(false);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   }
 
   return (
@@ -78,6 +122,7 @@ export default function Scan() {
 
       {error && <Alert type="error">{error}</Alert>}
 
+      {/* Camera Section (if scanning) */}
       {scanning && (
         <Card style={{ marginTop: "1rem", padding: "0" }}>
           <video
@@ -91,6 +136,30 @@ export default function Scan() {
 
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
+      {/* Upload Section */}
+      <Card style={{ marginTop: "1rem" }}>
+        <h3 style={{ marginBottom: "1rem" }}>Or Upload an Image</h3>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
+          style={{ display: "none" }}
+        />
+        <Button
+          onClick={() => fileInputRef.current?.click()}
+          variant="secondary"
+          disabled={uploading}
+          style={{ width: "100%" }}
+        >
+          {uploading ? "Processing..." : "Choose Image (Max 1MB)"}
+        </Button>
+        <p style={{ color: "var(--text)", fontSize: "0.85rem", marginTop: "0.5rem", textAlign: "center" }}>
+          Supported formats: PNG, JPG, JPEG, WEBP
+        </p>
+      </Card>
+
+      {/* Result Section */}
       {!scanning && result && (
         <Card style={{ marginTop: "1rem" }}>
           <p><strong>Result:</strong></p>
@@ -109,4 +178,4 @@ export default function Scan() {
       )}
     </main>
   );
-  }
+        }
