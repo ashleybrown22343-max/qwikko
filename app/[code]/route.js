@@ -1,4 +1,4 @@
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "../../lib/supabase";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
@@ -30,5 +30,10 @@ export async function GET(request, { params }) {
     .update({ clicks: (link.clicks || 0) + 1 })
     .eq("code", code);
 
-  return NextResponse.redirect(link.destination_url);
-    }
+  let destination = link.destination_url;
+  if (!/^https?:\/\//i.test(destination)) {
+    destination = "https://" + destination;
+  }
+
+  return NextResponse.redirect(destination);
+}
