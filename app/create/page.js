@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { Button, Card, Input, Alert } from "../../components/ui";
+import { Button, Card, Input, Alert } from "../components/ui";
 
 const RESERVED = ["generate", "create", "dashboard", "scan", "login"];
 
