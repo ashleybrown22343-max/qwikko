@@ -3,7 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
-import { Button, Card, Alert } from "../../components/ui";
+import { Button, Card, Alert } from "../components/ui";
 
 export default function Scan() {
   const videoRef = useRef(null);
