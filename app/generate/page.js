@@ -60,6 +60,15 @@ END:VCARD`;
     });
   }
 
+  function downloadQr() {
+    if (!canvasRef.current) return;
+    const url = canvasRef.current.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "qwikko-qr.png";
+    a.click();
+  }
+
   async function generate() {
     setError("");
     setShortUrl("");
@@ -72,7 +81,6 @@ END:VCARD`;
       return;
     }
 
-    // trackable: create a smart link, encode the short URL in the QR instead
     const code = randomCode();
     const isRedirectType = ["URL", "WhatsApp", "Phone", "Email"].includes(type);
 
@@ -84,7 +92,7 @@ END:VCARD`;
     if (isRedirectType) {
       row.destination_url = rawContent;
     } else {
-      row.content = fields; // raw field data for Text/WiFi/vCard landing page
+      row.content = fields;
     }
 
     const { error: insertError } = await supabase.from("links").insert(row);
@@ -174,6 +182,10 @@ END:VCARD`;
       <div style={{ marginTop: "24px" }}>
         <canvas ref={canvasRef}></canvas>
       </div>
+
+      <button onClick={downloadQr} style={{ marginTop: "12px" }}>
+        Download QR
+      </button>
     </main>
   );
-      }
+                                                  }
