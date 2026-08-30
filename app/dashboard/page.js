@@ -1,8 +1,10 @@
+// app/dashboard/page.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { Button, Card, Badge, Alert, Input, Spinner } from "../../components/ui";
 
 export default function Dashboard() {
   const [links, setLinks] = useState([]);
@@ -11,6 +13,7 @@ export default function Dashboard() {
   const [editValue, setEditValue] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,14 +26,17 @@ export default function Dashboard() {
       router.push("/login");
       return;
     }
-    await loadData();
+    setUser(session.user);
+    await loadData(session.user.id);
     setLoading(false);
   }
 
-  async function loadData() {
+  async function loadData(userId) {
+    // Only fetch links belonging to this user
     const { data: linksData } = await supabase
       .from("links")
       .select("*")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     const codes = (linksData || []).map((l) => l.code);
@@ -98,7 +104,8 @@ export default function Dashboard() {
     const { error: updateError } = await supabase
       .from("links")
       .update({ destination_url: newDestination })
-      .eq("code", code);
+      .eq("code", code)
+      .eq("user_id", user.id);  // security check
 
     if (updateError) {
       setError(updateError.message);
@@ -107,114 +114,174 @@ export default function Dashboard() {
 
     setEditingCode(null);
     setEditValue("");
-    loadData();
+    loadData(user.id);
   }
 
   async function deleteLink(code) {
     const confirmed = window.confirm(`Delete link "${code}"? This can't be undone.`);
     if (!confirmed) return;
 
-    await supabase.from("links").delete().eq("code", code);
-    loadData();
+    const { error: deleteError } = await supabase
+      .from("links")
+      .delete()
+      .eq("code", code)
+      .eq("user_id", user.id);  // security check
+
+    if (deleteError) {
+      setError(deleteError.message);
+      return;
+    }
+    loadData(user.id);
   }
 
-  if (loading) return <main style={{ padding: "24px" }}>Loading...</main>;
+  if (loading) return <Spinner />;
 
   return (
-    <main style={{ padding: "24px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <main className="container" style={{ padding: "2rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <h1>Dashboard</h1>
-        <button onClick={handleLogout}>Log out</button>
+        <Button onClick={handleLogout} variant="ghost">Log out</Button>
       </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <Alert type="error">{error}</Alert>}
 
-      <h2>Links</h2>
-      {links.length === 0 && <p>No links yet.</p>}
-      <table>
-        <thead>
-          <tr>
-            <th>Code</th>
-            <th>Type</th>
-            <th>Destination</th>
-            <th>Clicks</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      {/* Summary Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+        <Card>
+          <h3 style={{ margin: "0" }}>{links.length}</h3>
+          <p style={{ color: "var(--text)" }}>Total Links</p>
+        </Card>
+        <Card>
+          <h3 style={{ margin: "0" }}>{logs.length}</h3>
+          <p style={{ color: "var(--text)" }}>Total Clicks</p>
+        </Card>
+        <Card>
+          <h3 style={{ margin: "0" }}>{Object.keys(countryBreakdown()).length}</h3>
+          <p style={{ color: "var(--text)" }}>Countries</p>
+        </Card>
+      </div>
+
+      <h2 style={{ marginBottom: "1rem" }}>Your Links</h2>
+      {links.length === 0 ? (
+        <Card>
+          <p style={{ textAlign: "center", color: "var(--text)" }}>No links yet. Create your first smart link!</p>
+          <div style={{ textAlign: "center", marginTop: "1rem" }}>
+            <Button href="/create" variant="primary">Create Link</Button>
+          </div>
+        </Card>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {links.map((link) => (
-            <tr key={link.id}>
-              <td>{link.code}</td>
-              <td>{link.link_type}</td>
-              <td>
-                {editingCode === link.code ? (
-                  <input
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    style={{ width: "100%" }}
-                  />
-                ) : (
-                  link.destination_url || <em>(non-URL content)</em>
+            <Card key={link.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Badge>{link.link_type}</Badge>
+                  <strong>{link.code}</strong>
+                </div>
+                <p style={{ color: "var(--text)", marginTop: "0.5rem" }}>
+                  {link.destination_url || "Non-URL content"}
+                </p>
+                <p style={{ color: "var(--text)", fontSize: "0.85rem" }}>
+                  Clicks: {link.clicks} | Created: {new Date(link.created_at).toLocaleDateString()}
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                {link.link_type === "url" && (
+                  editingCode === link.code ? (
+                    <>
+                      <Input
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        placeholder="New destination URL"
+                        style={{ width: "200px" }}
+                      />
+                      <Button onClick={() => saveEdit(link.code)} variant="primary">Save</Button>
+                      <Button onClick={cancelEdit} variant="ghost">Cancel</Button>
+                    </>
+                  ) : (
+                    <Button onClick={() => startEdit(link)} variant="secondary">Edit</Button>
+                  )
                 )}
-              </td>
-              <td>{link.clicks}</td>
-              <td>{new Date(link.created_at).toLocaleDateString()}</td>
-              <td>
-                {editingCode === link.code ? (
-                  <>
-                    <button onClick={() => saveEdit(link.code)}>Save</button>
-                    <button onClick={cancelEdit}>Cancel</button>
-                  </>
-                ) : (
-                  <>
-                    {link.link_type === "url" && (
-                      <button onClick={() => startEdit(link)}>Edit</button>
-                    )}
-                    <button onClick={() => deleteLink(link.code)}>Delete</button>
-                  </>
-                )}
-              </td>
-            </tr>
+                <Button onClick={() => deleteLink(link.code)} variant="danger">Delete</Button>
+              </div>
+            </Card>
           ))}
-        </tbody>
-      </table>
+        </div>
+      )}
 
-      <h2>By country</h2>
-      <ul>
-        {Object.entries(countryBreakdown()).map(([country, count]) => (
-          <li key={country}>{country}: {count}</li>
-        ))}
-      </ul>
+      {/* Analytics Section */}
+      <div style={{ marginTop: "3rem" }}>
+        <h2>Analytics</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "2rem", marginTop: "1rem" }}>
+          <Card>
+            <h3>By Country</h3>
+            {Object.keys(countryBreakdown()).length === 0 ? (
+              <p style={{ color: "var(--text)" }}>No data yet.</p>
+            ) : (
+              <ul>
+                {Object.entries(countryBreakdown()).map(([country, count]) => (
+                  <li key={country} style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>{country}</span>
+                    <strong>{count}</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+          <Card>
+            <h3>By Device</h3>
+            <ul>
+              <li>Mobile: {deviceBreakdown().mobile}</li>
+              <li>Desktop: {deviceBreakdown().desktop}</li>
+              <li>Other: {deviceBreakdown().other}</li>
+            </ul>
+          </Card>
+        </div>
+      </div>
 
-      <h2>By device</h2>
-      <ul>
-        <li>Mobile: {deviceBreakdown().mobile}</li>
-        <li>Desktop: {deviceBreakdown().desktop}</li>
-        <li>Other: {deviceBreakdown().other}</li>
-      </ul>
-
-      <h2>Recent clicks</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Link</th>
-            <th>Country</th>
-            <th>Referrer</th>
-            <th>Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {logs.slice(0, 20).map((log) => (
-            <tr key={log.id}>
-              <td>{log.link_code}</td>
-              <td>{log.country}</td>
-              <td>{log.referrer}</td>
-              <td>{new Date(log.timestamp).toLocaleString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {/* Recent Clicks */}
+      <div style={{ marginTop: "3rem" }}>
+        <h2>Recent Clicks</h2>
+        {logs.slice(0, 20).length === 0 ? (
+          <p style={{ color: "var(--text)" }}>No clicks yet.</p>
+        ) : (
+          <Card style={{ padding: "0" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "var(--bg)" }}>
+                  <th style={thStyle}>Link</th>
+                  <th style={thStyle}>Country</th>
+                  <th style={thStyle}>Referrer</th>
+                  <th style={thStyle}>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {logs.slice(0, 20).map((log) => (
+                  <tr key={log.id} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td style={tdStyle}>{log.link_code}</td>
+                    <td style={tdStyle}>{log.country}</td>
+                    <td style={tdStyle}>{log.referrer}</td>
+                    <td style={tdStyle}>{new Date(log.timestamp).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        )}
+      </div>
     </main>
   );
-    }
+}
+
+const thStyle = {
+  textAlign: "left",
+  padding: "0.75rem 1rem",
+  fontWeight: "600",
+  color: "var(--text)",
+  fontSize: "0.85rem",
+};
+
+const tdStyle = {
+  padding: "0.75rem 1rem",
+  fontSize: "0.9rem",
+};
