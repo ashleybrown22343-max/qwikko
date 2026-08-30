@@ -99,9 +99,10 @@ END:VCARD`;
     };
 
     if (isRedirectType) {
-      row.destination_url = rawContent;
-    } else {
-      row.content = fields;
+  row.destination_url = rawContent;
+} else {
+  row.content = fields;
+  row.destination_url = null; // Explicitly set to null
     }
 
     // Add user id if logged in
