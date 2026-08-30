@@ -4,7 +4,7 @@
 import { useState, useRef } from "react";
 import QRCode from "qrcode";
 import { supabase } from "../../lib/supabase";
-import { Button, Card, Input, Alert, Spinner } from "../../components/ui";
+import { Button, Card, Input, Alert, Spinner } from "../components/ui";
 
 const TYPES = ["URL", "Text", "Email", "Phone", "WhatsApp", "WiFi", "vCard"];
 
