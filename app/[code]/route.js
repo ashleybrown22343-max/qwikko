@@ -51,8 +51,35 @@ export async function GET(request, { params }) {
     .eq("code", code)
     .single();
 
+  // 🎨 Custom 404 page for unknown links
   if (error || !link) {
-    return new NextResponse("Link not found", { status: 404 });
+    const notFoundHtml = `
+      <html>
+        <head>
+          <title>Link not found - Qwikko</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <style>
+            body { font-family: system-ui, sans-serif; background: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #0f172a; }
+            .container { text-align: center; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+            h1 { font-size: 5rem; color: #2563eb; margin: 0; }
+            p { color: #64748b; margin: 1rem 0; }
+            a { display: inline-block; background: #2563eb; color: white; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; }
+            a:hover { background: #1d4ed8; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>404</h1>
+            <p>Oops! The link you're trying to access doesn't exist or has been removed.</p>
+            <a href="/">Go to Home</a>
+          </div>
+        </body>
+      </html>
+    `;
+    return new NextResponse(notFoundHtml, {
+      status: 404,
+      headers: { "content-type": "text/html" },
+    });
   }
 
   const country = request.headers.get("x-vercel-ip-country") || "unknown";
@@ -85,4 +112,4 @@ export async function GET(request, { params }) {
   return new NextResponse(html, {
     headers: { "content-type": "text/html" },
   });
-    }
+      }
