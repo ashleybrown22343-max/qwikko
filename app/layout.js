@@ -1,3 +1,7 @@
+// app/layout.js
+import "./globals.css";
+import Navbar from "./components/Navbar";
+
 export const metadata = {
   title: "Qwikko — QR + Smart Link Toolkit",
   description: "Free QR codes and branded smart links for businesses and creators.",
@@ -6,7 +10,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: "system-ui, sans-serif" }}>
+      <body>
+        <Navbar />
         {children}
       </body>
     </html>
