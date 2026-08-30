@@ -37,4 +37,12 @@ export function Badge({ children }) {
 
 export function Alert({ type, children }) {
   return <div className={`alert alert-${type}`}>{children}</div>;
+}
+
+export function Spinner() {
+  return (
+    <div style={{ textAlign: "center", padding: "2rem" }}>
+      <div className="spinner" />
+    </div>
+  );
     }
