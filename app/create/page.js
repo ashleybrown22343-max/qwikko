@@ -1,7 +1,9 @@
+// app/create/page.js
 "use client";
 
 import { useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { Button, Card, Input, Alert } from "../../components/ui";
 
 const RESERVED = ["generate", "create", "dashboard", "scan", "login"];
 
@@ -19,14 +21,17 @@ export default function CreateLink() {
   const [customCode, setCustomCode] = useState("");
   const [shortUrl, setShortUrl] = useState("");
   const [error, setError] = useState("");
-  const [isGuest, setIsGuest] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   async function handleCreate() {
     setError("");
     setShortUrl("");
+    setLoading(true);
 
     if (!destination) {
       setError("Paste a destination URL first.");
+      setLoading(false);
       return;
     }
 
@@ -40,10 +45,12 @@ export default function CreateLink() {
     if (code) {
       if (!/^[a-zA-Z0-9-]+$/.test(code)) {
         setError("Custom code can only contain letters, numbers, and hyphens.");
+        setLoading(false);
         return;
       }
       if (RESERVED.includes(code.toLowerCase())) {
         setError(`"${code}" is reserved. Try a different code.`);
+        setLoading(false);
         return;
       }
     } else {
@@ -69,46 +76,48 @@ export default function CreateLink() {
       } else {
         setError(insertError.message);
       }
+      setLoading(false);
       return;
     }
 
     setShortUrl(`${window.location.origin}/${code}`);
+    setLoading(false);
   }
 
   return (
-    <main style={{ padding: "24px" }}>
-      <h1>Create a smart link</h1>
+    <main className="container" style={{ maxWidth: "600px", padding: "2rem" }}>
+      <h1>Create a Smart Link</h1>
+      <Card style={{ marginTop: "1rem" }}>
+        <Input
+          label="Destination URL"
+          placeholder="https://your-destination.com"
+          value={destination}
+          onChange={(e) => setDestination(e.target.value)}
+        />
+        <Input
+          label="Custom code (optional)"
+          placeholder="e.g. cresoa"
+          value={customCode}
+          onChange={(e) => setCustomCode(e.target.value)}
+        />
 
-      <input
-        placeholder="https://your-destination.com"
-        value={destination}
-        onChange={(e) => setDestination(e.target.value)}
-        style={{ width: "100%", padding: "8px" }}
-      />
+        {error && <Alert type="error">{error}</Alert>}
 
-      <input
-        placeholder="Custom code (optional), e.g. cresoa"
-        value={customCode}
-        onChange={(e) => setCustomCode(e.target.value)}
-        style={{ width: "100%", padding: "8px", marginTop: "8px" }}
-      />
-
-      <button onClick={handleCreate} style={{ marginTop: "12px" }}>
-        Create link
-      </button>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
+        <Button onClick={handleCreate} variant="primary" disabled={loading} style={{ marginTop: "1rem", width: "100%" }}>
+          {loading ? "Creating..." : "Create Link"}
+        </Button>
+      </Card>
 
       {shortUrl && (
-        <div style={{ marginTop: "16px" }}>
-          <p>Your link: <a href={shortUrl}>{shortUrl}</a></p>
+        <Alert type="success" style={{ marginTop: "1rem" }}>
+          <p>Your link: <a href={shortUrl} target="_blank" rel="noopener noreferrer">{shortUrl}</a></p>
           {isGuest && (
-            <p style={{ color: "#666", fontSize: "0.9rem" }}>
+            <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "var(--text)" }}>
               Sign in to manage, edit, or track this link later — otherwise it's guest-created and can't be recovered.
             </p>
           )}
-        </div>
+        </Alert>
       )}
     </main>
   );
-}
+      }
