@@ -1,95 +1,51 @@
+// app/page.js
 import Link from "next/link";
+import { Button, Card } from "./components/ui";
 
 export default function Home() {
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        padding: "24px",
-        background: "#F7F9FC",
-      }}
-    >
-      <div
-        style={{
-          position: "relative",
-          padding: "32px 48px",
-        }}
-      >
-        <span style={cornerStyle("top", "left")} />
-        <span style={cornerStyle("top", "right")} />
-        <span style={cornerStyle("bottom", "left")} />
-        <span style={cornerStyle("bottom", "right")} />
-
-        <h1
-          style={{
-            fontSize: "2.5rem",
-            fontWeight: 700,
-            margin: 0,
-            color: "#16213E",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Qwikko
+    <main className="container">
+      {/* Hero Section */}
+      <section style={{ padding: "4rem 0", textAlign: "center" }}>
+        <div style={{ display: "inline-block", padding: "0.5rem 1rem", background: "var(--primary-light)", borderRadius: "999px", color: "var(--primary)", fontWeight: 600, fontSize: "0.9rem", marginBottom: "1rem" }}>
+          Free QR codes & smart links
+        </div>
+        <h1 style={{ fontSize: "3rem", marginBottom: "1rem" }}>
+          Boost your brand with <span style={{ color: "var(--primary)" }}>Qwikko</span>
         </h1>
-      </div>
+        <p style={{ fontSize: "1.2rem", color: "var(--text)", maxWidth: "600px", margin: "0 auto 2rem" }}>
+          Create branded QR codes and trackable smart links that work everywhere. Perfect for marketers, creators, and businesses.
+        </p>
+        <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+          <Button href="/generate" variant="primary">Generate QR</Button>
+          <Button href="/create" variant="secondary">Create Smart Link</Button>
+        </div>
+      </section>
 
-      <p style={{ color: "#4A5568", fontSize: "1.05rem", marginTop: "8px" }}>
-        QR codes + smart links — coming together right here.
-      </p>
+      {/* Feature Highlights */}
+      <section style={{ padding: "2rem 0 4rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "2rem" }}>
+          <Card>
+            <h3>QR Codes</h3>
+            <p>Generate QR codes for URLs, Wi-Fi, vCards, WhatsApp, and more. Download instantly.</p>
+          </Card>
+          <Card>
+            <h3>Smart Links</h3>
+            <p>Create short branded links like qwikko.com/x/yourbrand with real‑time analytics.</p>
+          </Card>
+          <Card>
+            <h3>Analytics</h3>
+            <p>Track clicks, countries, devices, and referrers for every link you create.</p>
+          </Card>
+        </div>
+      </section>
 
-      <nav
-        style={{
-          marginTop: "32px",
-          display: "flex",
-          gap: "12px",
-          flexWrap: "wrap",
-          justifyContent: "center",
-        }}
-      >
-        <Link href="/generate" style={navLinkStyle}>
-          Generate QR
-        </Link>
-        <Link href="/create" style={navLinkStyle}>
-          Create smart link
-        </Link>
-        <Link href="/dashboard" style={navLinkStyle}>
-          Dashboard
-        </Link>
-      </nav>
+      {/* CTA */}
+      <section style={{ padding: "2rem 0", background: "var(--primary)", borderRadius: "1rem", textAlign: "center", color: "white" }}>
+        <h2 style={{ color: "white" }}>Ready to get started?</h2>
+        <p style={{ margin: "1rem 0", fontSize: "1.1rem" }}>Join thousands of users who already trust Qwikko.</p>
+        <Button href="/login" variant="secondary" style={{ background: "white", color: "var(--primary)", border: "none" }}>Sign Up Free</Button>
+      </section>
     </main>
   );
 }
-
-const navLinkStyle = {
-  display: "inline-block",
-  background: "#2F6FED",
-  color: "#fff",
-  padding: "10px 20px",
-  borderRadius: "8px",
-  fontSize: "0.95rem",
-  fontWeight: 600,
-  textDecoration: "none",
-};
-
-function cornerStyle(vertical, horizontal) {
-  const size = "20px";
-  const thickness = "3px";
-  const color = "#FFB020";
-
-  return {
-    position: "absolute",
-    width: size,
-    height: size,
-    [vertical]: "0",
-    [horizontal]: "0",
-    borderTop: vertical === "top" ? `${thickness} solid ${color}` : "none",
-    borderBottom: vertical === "bottom" ? `${thickness} solid ${color}` : "none",
-    borderLeft: horizontal === "left" ? `${thickness} solid ${color}` : "none",
-    borderRight: horizontal === "right" ? `${thickness} solid ${color}` : "none",
-  };
-        }
