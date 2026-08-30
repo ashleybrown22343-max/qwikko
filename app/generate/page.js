@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import QRCode from "qrcode";
 import { supabase } from "../../lib/supabase";
-import { Button, Card, Input, Alert } from "../../components/ui";
+import { Button, Card, Input, Alert } from "../components/ui";
 
 const TYPES = ["URL", "Text", "Email", "Phone", "WhatsApp", "WiFi", "vCard"];
 
