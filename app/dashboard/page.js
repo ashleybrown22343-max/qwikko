@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 export default function Dashboard() {
@@ -9,10 +10,22 @@ export default function Dashboard() {
   const [editingCode, setEditingCode] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    loadData();
+    checkAuthAndLoad();
   }, []);
+
+  async function checkAuthAndLoad() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      router.push("/login");
+      return;
+    }
+    await loadData();
+    setLoading(false);
+  }
 
   async function loadData() {
     const { data: linksData } = await supabase
@@ -20,13 +33,25 @@ export default function Dashboard() {
       .select("*")
       .order("created_at", { ascending: false });
 
-    const { data: logsData } = await supabase
-      .from("click_logs")
-      .select("*")
-      .order("timestamp", { ascending: false });
+    const codes = (linksData || []).map((l) => l.code);
+
+    let logsData = [];
+    if (codes.length > 0) {
+      const { data } = await supabase
+        .from("click_logs")
+        .select("*")
+        .in("link_code", codes)
+        .order("timestamp", { ascending: false });
+      logsData = data || [];
+    }
 
     setLinks(linksData || []);
-    setLogs(logsData || []);
+    setLogs(logsData);
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
   }
 
   function countryBreakdown() {
@@ -89,19 +114,23 @@ export default function Dashboard() {
     const confirmed = window.confirm(`Delete link "${code}"? This can't be undone.`);
     if (!confirmed) return;
 
-    await supabase.from("click_logs").delete().eq("link_code", code);
     await supabase.from("links").delete().eq("code", code);
-
     loadData();
   }
 
+  if (loading) return <main style={{ padding: "24px" }}>Loading...</main>;
+
   return (
     <main style={{ padding: "24px" }}>
-      <h1>Dashboard</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>Dashboard</h1>
+        <button onClick={handleLogout}>Log out</button>
+      </div>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
       <h2>Links</h2>
+      {links.length === 0 && <p>No links yet.</p>}
       <table>
         <thead>
           <tr>
@@ -188,4 +217,4 @@ export default function Dashboard() {
       </table>
     </main>
   );
-           }
+    }
