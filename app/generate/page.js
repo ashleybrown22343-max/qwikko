@@ -1,11 +1,40 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import QRCode from "qrcode";
+import QRCodeStyling from "qr-code-styling";
 import { supabase } from "../../lib/supabase";
-import { Button, Card, Input, Alert } from "../components/ui";
+import { Button, Card, Input, Alert } from "../../components/ui";
 
 const TYPES = ["URL", "Text", "Email", "Phone", "WhatsApp", "WiFi", "vCard"];
+
+// Predefined themes
+const THEMES = {
+  "Blue Gradient": {
+    dotsOptions: { color: "#2563EB", type: "rounded" },
+    backgroundOptions: { color: "#ffffff" },
+    cornersSquareOptions: { color: "#1D4ED8", type: "extra-rounded" },
+    cornersDotOptions: { color: "#2563EB" },
+    imageOptions: { crossOrigin: "anonymous", margin: 5 },
+  },
+  "Minimal Black": {
+    dotsOptions: { color: "#000000", type: "square" },
+    backgroundOptions: { color: "#ffffff" },
+    cornersSquareOptions: { color: "#000000", type: "square" },
+    cornersDotOptions: { color: "#000000" },
+  },
+  "Corporate Navy": {
+    dotsOptions: { color: "#0F172A", type: "classy" },
+    backgroundOptions: { color: "#F8FAFC" },
+    cornersSquareOptions: { color: "#0F172A", type: "extra-rounded" },
+    cornersDotOptions: { color: "#0F172A" },
+  },
+  "Warm Sunset": {
+    dotsOptions: { color: "#F59E0B", type: "dots" },
+    backgroundOptions: { color: "#FFF7ED" },
+    cornersSquareOptions: { color: "#F97316", type: "dot" },
+    cornersDotOptions: { color: "#F97316" },
+  },
+};
 
 function randomCode(length = 6) {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
@@ -25,13 +54,21 @@ export default function Generate() {
   const [loading, setLoading] = useState(false);
   
   // Customization states
-  const [qrColor, setQrColor] = useState("#2563EB");
-  const [bgColor, setBgColor] = useState("#FFFFFF");
+  const [theme, setTheme] = useState("Blue Gradient");
+  const [foregroundColor, setForegroundColor] = useState("#2563EB");
+  const [backgroundColor, setBackgroundColor] = useState("#FFFFFF");
+  const [useGradient, setUseGradient] = useState(false);
+  const [gradientFrom, setGradientFrom] = useState("#2563EB");
+  const [gradientTo, setGradientTo] = useState("#1D4ED8");
+  const [dotsType, setDotsType] = useState("rounded"); // square, dots, rounded, classy, extra-rounded
+  const [cornerSquareType, setCornerSquareType] = useState("extra-rounded"); // square, dot, extra-rounded
+  const [cornerDotType, setCornerDotType] = useState("square"); // square, dot
+  const [logoUrl, setLogoUrl] = useState("");
   const [size, setSize] = useState(260);
   const [margin, setMargin] = useState(2);
-  const [logoUrl, setLogoUrl] = useState("");
 
-  const canvasRef = useRef(null);
+  const qrRef = useRef(null);
+  const qrInstance = useRef(null);
 
   function updateField(key, value) {
     setFields({ ...fields, [key]: value });
@@ -53,49 +90,40 @@ export default function Generate() {
     }
   }
 
+  // Configure QR instance
+  function getQRCodeOptions(content) {
+    return {
+      width: size,
+      height: size,
+      type: "canvas",
+      data: content,
+      margin: margin,
+      image: logoUrl || undefined,
+      imageOptions: { crossOrigin: "anonymous", margin: 5 },
+      qrOptions: { errorCorrectionLevel: "H" },
+      dotsOptions: {
+        color: useGradient ? undefined : foregroundColor,
+        gradient: useGradient ? { type: "linear", rotation: 0, colorStops: [{ offset: 0, color: gradientFrom }, { offset: 1, color: gradientTo }] } : undefined,
+        type: dotsType,
+      },
+      backgroundOptions: { color: backgroundColor },
+      cornersSquareOptions: { color: useGradient ? gradientTo : foregroundColor, type: cornerSquareType },
+      cornersDotOptions: { color: useGradient ? gradientTo : foregroundColor, type: cornerDotType },
+    };
+  }
+
   async function drawQr(content) {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    // Generate the QR code
-    await new Promise((resolve) => {
-      QRCode.toCanvas(canvas, content, {
-        width: size,
-        margin: margin,
-        color: { dark: qrColor, light: bgColor },
-        errorCorrectionLevel: 'H', // High for logo overlay
-      }, (err) => {
-        if (err) console.error(err);
-        resolve();
-      });
-    });
-
-    // Overlay Logo (if provided)
-    if (logoUrl) {
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-      img.crossOrigin = "anonymous"; // For URL logos
-      img.onload = () => {
-        const logoSize = size * 0.2; // Logo is 20% of QR size
-        const x = (size - logoSize) / 2;
-        const y = (size - logoSize) / 2;
-        
-        // Draw white background behind logo for visibility
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(x - 5, y - 5, logoSize + 10, logoSize + 10);
-        ctx.drawImage(img, x, y, logoSize, logoSize);
-      };
-      img.src = logoUrl;
+    if (qrInstance.current) {
+      qrInstance.current.update({ data: content });
+    } else {
+      qrInstance.current = new QRCodeStyling(getQRCodeOptions(content));
+      qrInstance.current.append(qrRef.current);
     }
   }
 
   function downloadQr() {
-    if (!canvasRef.current) return;
-    const url = canvasRef.current.toDataURL("image/png");
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "qwikko-qr.png";
-    a.click();
+    if (!qrInstance.current) return;
+    qrInstance.current.download({ name: "qwikko-qr", extension: "png" });
   }
 
   async function generate() {
@@ -139,6 +167,36 @@ export default function Generate() {
     setLoading(false);
   }
 
+  // Re-draw when customization changes (if QR already generated)
+  useEffect(() => {
+    if (qrInstance.current) {
+      const currentData = qrInstance.current._options?.data;
+      if (currentData) {
+        qrInstance.current.update(getQRCodeOptions(currentData));
+      }
+    }
+  }, [theme, foregroundColor, backgroundColor, useGradient, gradientFrom, gradientTo, dotsType, cornerSquareType, cornerDotType, logoUrl, size, margin]);
+
+  // Apply theme when selected
+  function applyTheme(themeName) {
+    const themeOptions = THEMES[themeName];
+    if (themeOptions) {
+      setTheme(themeName);
+      setForegroundColor(themeOptions.dotsOptions.color || "#2563EB");
+      setBackgroundColor(themeOptions.backgroundOptions.color || "#FFFFFF");
+      setDotsType(themeOptions.dotsOptions.type || "rounded");
+      setCornerSquareType(themeOptions.cornersSquareOptions.type || "extra-rounded");
+      setCornerDotType(themeOptions.cornersDotOptions.type || "square");
+      if (themeOptions.dotsOptions.gradient) {
+        setUseGradient(true);
+        setGradientFrom(themeOptions.dotsOptions.gradient.colorStops[0].color);
+        setGradientTo(themeOptions.dotsOptions.gradient.colorStops[1].color);
+      } else {
+        setUseGradient(false);
+      }
+    }
+  }
+
   function renderFields() {
     switch (type) {
       case "URL": return <Input label="Destination URL" placeholder="https://example.com" value={fields.url || ""} onChange={(e) => updateField("url", e.target.value)} />;
@@ -169,7 +227,7 @@ export default function Generate() {
   }
 
   return (
-    <main className="container" style={{ maxWidth: "700px", padding: "2rem" }}>
+    <main className="container" style={{ maxWidth: "800px", padding: "2rem" }}>
       <h1>Generate a QR Code</h1>
       <Card style={{ marginTop: "1rem" }}>
         <div style={{ marginBottom: "1rem" }}>
@@ -193,20 +251,76 @@ export default function Generate() {
         </Button>
       </Card>
 
-      {/* Customization Section */}
+      {/* Customization Panel */}
       <Card style={{ marginTop: "1rem" }}>
         <h3>Customize QR</h3>
+
+        {/* Theme Selector */}
+        <div style={{ marginTop: "1rem" }}>
+          <label className="label">Theme</label>
+          <select className="input" value={theme} onChange={(e) => applyTheme(e.target.value)}>
+            {Object.keys(THEMES).map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
+
+        {/* Advanced Options */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
           <div>
             <label className="label">Foreground Color</label>
-            <input type="color" value={qrColor} onChange={(e) => setQrColor(e.target.value)} style={{ width: "100%", height: "40px", border: "1px solid var(--border)", borderRadius: "8px", padding: "2px" }} />
+            <input type="color" value={foregroundColor} onChange={(e) => setForegroundColor(e.target.value)} style={{ width: "100%", height: "40px", border: "1px solid var(--border)", borderRadius: "8px", padding: "2px" }} />
           </div>
           <div>
             <label className="label">Background Color</label>
-            <input type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} style={{ width: "100%", height: "40px", border: "1px solid var(--border)", borderRadius: "8px", padding: "2px" }} />
+            <input type="color" value={backgroundColor} onChange={(e) => setBackgroundColor(e.target.value)} style={{ width: "100%", height: "40px", border: "1px solid var(--border)", borderRadius: "8px", padding: "2px" }} />
           </div>
         </div>
-        
+
+        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "1rem" }}>
+          <input type="checkbox" checked={useGradient} onChange={(e) => setUseGradient(e.target.checked)} />
+          Use Gradient
+        </label>
+        {useGradient && (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "0.5rem" }}>
+            <div>
+              <label className="label">From</label>
+              <input type="color" value={gradientFrom} onChange={(e) => setGradientFrom(e.target.value)} style={{ width: "100%", height: "40px", border: "1px solid var(--border)", borderRadius: "8px", padding: "2px" }} />
+            </div>
+            <div>
+              <label className="label">To</label>
+              <input type="color" value={gradientTo} onChange={(e) => setGradientTo(e.target.value)} style={{ width: "100%", height: "40px", border: "1px solid var(--border)", borderRadius: "8px", padding: "2px" }} />
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginTop: "1rem" }}>
+          <label className="label">Dot Style</label>
+          <select className="input" value={dotsType} onChange={(e) => setDotsType(e.target.value)}>
+            <option value="square">Square</option>
+            <option value="dots">Dots</option>
+            <option value="rounded">Rounded</option>
+            <option value="classy">Classy</option>
+            <option value="extra-rounded">Extra Rounded</option>
+          </select>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+          <div>
+            <label className="label">Corner Square Style</label>
+            <select className="input" value={cornerSquareType} onChange={(e) => setCornerSquareType(e.target.value)}>
+              <option value="square">Square</option>
+              <option value="dot">Dot</option>
+              <option value="extra-rounded">Extra Rounded</option>
+            </select>
+          </div>
+          <div>
+            <label className="label">Corner Dot Style</label>
+            <select className="input" value={cornerDotType} onChange={(e) => setCornerDotType(e.target.value)}>
+              <option value="square">Square</option>
+              <option value="dot">Dot</option>
+            </select>
+          </div>
+        </div>
+
         <div style={{ marginTop: "1rem" }}>
           <label className="label">Size: {size}px</label>
           <input type="range" min="200" max="500" value={size} onChange={(e) => setSize(Number(e.target.value))} style={{ width: "100%" }} />
@@ -227,11 +341,11 @@ export default function Generate() {
       )}
 
       <div style={{ marginTop: "2rem", textAlign: "center" }}>
-        <canvas ref={canvasRef} />
+        <div ref={qrRef} />
         <Button onClick={downloadQr} variant="secondary" style={{ marginTop: "1rem" }}>
           Download QR
         </Button>
       </div>
     </main>
   );
-                      }
+}
