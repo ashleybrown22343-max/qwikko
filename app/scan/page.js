@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
-import { Button, Card, Alert } from "../../components/ui";
+import { Button, Card, Alert } from "../components/ui";
 
 const MAX_FILE_SIZE = 1024 * 1024; // 1MB
 
