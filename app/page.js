@@ -2,50 +2,149 @@
 import Link from "next/link";
 import { Button, Card } from "./components/ui";
 
+export const metadata = {
+  title: "Qwikko — QR Codes & Smart Links for Nigerian Businesses",
+  description: "Create trackable QR codes and branded short links for your business. Perfect for restaurants, vendors, and creators. Get real-time click analytics, WhatsApp links, and more.",
+  keywords: "QR code generator Nigeria, smart links, WhatsApp QR code, trackable links, restaurant menu QR, small business tools",
+  openGraph: {
+    title: "Qwikko — Turn Every Link into a Customer",
+    description: "Create QR codes and smart links that actually track your customers. No ads needed.",
+    url: "https://qwikko.vercel.app",
+    type: "website",
+  },
+};
+
 export default function Home() {
   return (
-    <main className="container">
-      {/* Hero Section */}
-      <section style={{ padding: "4rem 0", textAlign: "center" }}>
-        <div style={{ display: "inline-block", padding: "0.5rem 1rem", background: "var(--primary-light)", borderRadius: "999px", color: "var(--primary)", fontWeight: 600, fontSize: "0.9rem", marginBottom: "1rem" }}>
-          Free QR codes & smart links
-        </div>
-        <h1 style={{ fontSize: "3rem", marginBottom: "1rem" }}>
-          Boost your brand with <span style={{ color: "var(--primary)" }}>Qwikko</span>
-        </h1>
-        <p style={{ fontSize: "1.2rem", color: "var(--text)", maxWidth: "600px", margin: "0 auto 2rem" }}>
-          Create branded QR codes and trackable smart links that work everywhere. Perfect for marketers, creators, and businesses.
-        </p>
-        <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
-          <Button href="/generate" variant="primary">Generate QR</Button>
-          <Button href="/create" variant="secondary">Create Smart Link</Button>
-        </div>
-      </section>
+    <>
+      <main className="container">
+        {/* Hero Section */}
+        <section style={{ padding: "5rem 0 3rem", textAlign: "center", maxWidth: "700px", margin: "0 auto" }}>
+          <h1 style={{ fontSize: "3rem", marginBottom: "1.5rem" }}>
+            Turn your <span style={{ color: "var(--primary)" }}>offline</span> customers into{" "}
+            <span style={{ color: "var(--primary)" }}>online</span> fans.
+          </h1>
+          <p style={{ fontSize: "1.2rem", color: "var(--text)", marginBottom: "2rem" }}>
+            Qwikko gives you QR codes and smart links that track every single click, scan, and sale.
+            No tech skills needed — just paste, copy, and share.
+          </p>
+          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
+            <Button href="/generate" variant="primary">Create a QR Code</Button>
+            <Button href="/create" variant="secondary">Make a Smart Link</Button>
+          </div>
+          <p style={{ marginTop: "1.5rem", fontSize: "0.9rem", color: "var(--text)" }}>
+            No credit card. Just your email and a few clicks.
+          </p>
+        </section>
 
-      {/* Feature Highlights */}
-      <section style={{ padding: "2rem 0 4rem" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "2rem" }}>
-          <Card>
-            <h3>QR Codes</h3>
-            <p>Generate QR codes for URLs, Wi-Fi, vCards, WhatsApp, and more. Download instantly.</p>
-          </Card>
-          <Card>
-            <h3>Smart Links</h3>
-            <p>Create short branded links like qwikko.com/x/yourbrand with real‑time analytics.</p>
-          </Card>
-          <Card>
-            <h3>Analytics</h3>
-            <p>Track clicks, countries, devices, and referrers for every link you create.</p>
-          </Card>
-        </div>
-      </section>
+        {/* Social Proof Bar */}
+        <section style={{ padding: "2rem 0", borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", textAlign: "center" }}>
+            <div>
+              <h3 style={{ color: "var(--primary)", fontSize: "1.5rem" }}>2,000+</h3>
+              <p style={{ color: "var(--text)" }}>Links created</p>
+            </div>
+            <div>
+              <h3 style={{ color: "var(--primary)", fontSize: "1.5rem" }}>15,000+</h3>
+              <p style={{ color: "var(--text)" }}>Clicks tracked</p>
+            </div>
+            <div>
+              <h3 style={{ color: "var(--primary)", fontSize: "1.5rem" }}>12+</h3>
+              <p style={{ color: "var(--text)" }}>QR types</p>
+            </div>
+          </div>
+        </section>
 
-      {/* CTA */}
-      <section style={{ padding: "2rem 0", background: "var(--primary)", borderRadius: "1rem", textAlign: "center", color: "white" }}>
-        <h2 style={{ color: "white" }}>Ready to get started?</h2>
-        <p style={{ margin: "1rem 0", fontSize: "1.1rem" }}>Join thousands of users who already trust Qwikko.</p>
-        <Button href="/login" variant="secondary" style={{ background: "white", color: "var(--primary)", border: "none" }}>Sign Up Free</Button>
-      </section>
-    </main>
+        {/* How It Works */}
+        <section style={{ padding: "3rem 0" }}>
+          <h2 style={{ textAlign: "center", marginBottom: "2rem" }}>How Qwikko Works</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "2rem" }}>
+            <Card style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>1️⃣</div>
+              <h3>Create Your Link</h3>
+              <p style={{ color: "var(--text)" }}>Paste any URL, WhatsApp number, or even your Wi-Fi details.</p>
+            </Card>
+            <Card style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>2️⃣</div>
+              <h3>Print or Share</h3>
+              <p style={{ color: "var(--text)" }}>Download your QR code or copy your short link. Put it anywhere.</p>
+            </Card>
+            <Card style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>3️⃣</div>
+              <h3>Watch the Data Roll In</h3>
+              <p style={{ color: "var(--text)" }}>See exactly where your customers come from and how they click.</p>
+            </Card>
+          </div>
+        </section>
+
+        {/* Use Cases */}
+        <section style={{ padding: "3rem 0", background: "var(--primary-light)", borderRadius: "1rem", marginBottom: "3rem" }}>
+          <h2 style={{ textAlign: "center", marginBottom: "2rem" }}>Built for Nigerian Businesses</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem", padding: "0 2rem" }}>
+            <div>
+              <h3>🏪 Shop Owners</h3>
+              <p>Print a QR at your counter. Customers scan it and get your WhatsApp instantly.</p>
+            </div>
+            <div>
+              <h3>🍽️ Restaurant Owners</h3>
+              <p>Replace paper menus with a QR code. Update prices without reprinting.</p>
+            </div>
+            <div>
+              <h3>✍️ Creators</h3>
+              <p>Share your music, videos, or portfolio with one trackable link.</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section style={{ padding: "3rem 0 5rem", textAlign: "center" }}>
+          <h2>Ready to stop guessing and start growing?</h2>
+          <p style={{ color: "var(--text)", margin: "1rem 0 2rem" }}>
+            Join hundreds of small businesses already using Qwikko.
+          </p>
+          <Button href="/login" variant="primary" style={{ fontSize: "1.1rem", padding: "1rem 2rem" }}>
+            Get Started — It's Free
+          </Button>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer style={{ background: "var(--navy)", color: "white", padding: "3rem 1rem 2rem", marginTop: "2rem" }}>
+        <div className="container" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "2rem" }}>
+          <div>
+            <h3 style={{ color: "white", marginBottom: "1rem" }}>Qwikko</h3>
+            <p style={{ color: "#94a3b8", fontSize: "0.9rem" }}>
+              The simplest way to turn your printed material into a measurable marketing channel.
+            </p>
+          </div>
+          <div>
+            <h4 style={{ marginBottom: "1rem" }}>Product</h4>
+            <ul style={{ listStyle: "none", padding: "0", color: "#94a3b8" }}>
+              <li style={{ marginBottom: "0.5rem" }}><Link href="/generate" style={{ color: "#94a3b8" }}>Generate QR</Link></li>
+              <li style={{ marginBottom: "0.5rem" }}><Link href="/create" style={{ color: "#94a3b8" }}>Smart Links</Link></li>
+              <li style={{ marginBottom: "0.5rem" }}><Link href="/scan" style={{ color: "#94a3b8" }}>Scan QR</Link></li>
+              <li style={{ marginBottom: "0.5rem" }}><Link href="/dashboard" style={{ color: "#94a3b8" }}>Dashboard</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 style={{ marginBottom: "1rem" }}>Account</h4>
+            <ul style={{ listStyle: "none", padding: "0", color: "#94a3b8" }}>
+              <li style={{ marginBottom: "0.5rem" }}><Link href="/login" style={{ color: "#94a3b8" }}>Sign In</Link></li>
+              <li style={{ marginBottom: "0.5rem" }}><Link href="/login" style={{ color: "#94a3b8" }}>Sign Up</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h4 style={{ marginBottom: "1rem" }}>Legal</h4>
+            <ul style={{ listStyle: "none", padding: "0", color: "#94a3b8" }}>
+              <li style={{ marginBottom: "0.5rem" }}><a href="/privacy" style={{ color: "#94a3b8" }}>Privacy Policy</a></li>
+              <li style={{ marginBottom: "0.5rem" }}><a href="/terms" style={{ color: "#94a3b8" }}>Terms of Service</a></li>
+            </ul>
+          </div>
+        </div>
+        <div style={{ borderTop: "1px solid #334155", marginTop: "2rem", paddingTop: "1.5rem", textAlign: "center", color: "#64748b", fontSize: "0.85rem" }}>
+          © {new Date().getFullYear()} Qwikko. All rights reserved.
+        </div>
+      </footer>
+    </>
   );
 }
