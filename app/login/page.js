@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { Button, Card, Input, Alert } from "../../components/ui";
+import { Button, Card, Input, Alert } from "../components/ui";
 
 export default function Login() {
   const [mode, setMode] = useState("signin");
