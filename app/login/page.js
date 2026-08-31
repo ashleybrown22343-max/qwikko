@@ -1,27 +1,51 @@
 // app/login/page.js
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { Button, Card, Input, Alert } from "../components/ui";
 
-function LoginContent() {
+export default function Login() {
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [manualUrl, setManualUrl] = useState("");
   const router = useRouter();
-  const searchParams = useSearchParams();
 
+  // Safe way to read URL errors without useSearchParams (avoids client-side crash)
   useEffect(() => {
-    const urlError = searchParams.get("error");
-    if (urlError === "missing_code") setError("Authentication was interrupted. Please try again.");
-    if (urlError === "auth_failed") setError("Google sign-in failed. Please try again.");
-  }, [searchParams]);
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlError = params.get("error");
+      if (urlError === "missing_code") setError("Authentication was interrupted. Please try again.");
+      if (urlError === "auth_failed") setError("Google sign-in failed. Please try again.");
+      if (urlError === "server_error") setError("Server error during sign-in. Please try again.");
+    }
+  }, []);
+
+  async function handleEmailAuth() {
+    setError("");
+    setMessage("");
+    setLoading(true);
+    if (!email || !password) {
+      setError("Enter both email and password.");
+      setLoading(false);
+      return;
+    }
+    if (mode === "signup") {
+      const { error: signUpError } = await supabase.auth.signUp({ email, password });
+      if (signUpError) { setError(signUpError.message); setLoading(false); return; }
+      setMessage("Check your email to confirm your account.");
+      setLoading(false);
+    } else {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) { setError(signInError.message); setLoading(false); return; }
+      router.push("/dashboard");
+    }
+  }
 
   async function handleGoogleAuth() {
     setError("");
@@ -33,18 +57,21 @@ function LoginContent() {
       });
       if (error) { setError(error.message); setLoading(false); return; }
       if (data?.url) {
-        setManualUrl(data.url); // Store the URL
         window.location.replace(data.url);
       } else {
         setError("No redirect URL returned. Check Google provider setup.");
         setLoading(false);
       }
-    } catch (err) { setError("Unexpected error: " + err.message); setLoading(false); }
+    } catch (err) {
+      setError("Unexpected error: " + err.message);
+      setLoading(false);
+    }
   }
 
   return (
     <main className="container" style={{ minHeight: "calc(100vh - 60px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1rem" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem", maxWidth: "900px", width: "100%" }}>
+        {/* Left side */}
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "2rem", background: "var(--primary)", borderRadius: "12px", color: "white" }}>
           <h2 style={{ color: "white", fontSize: "2rem", marginBottom: "1rem" }}>Qwikko</h2>
           <p style={{ fontSize: "1.1rem", opacity: "0.9", marginBottom: "2rem" }}>QR codes & smart links with powerful analytics.</p>
@@ -55,19 +82,30 @@ function LoginContent() {
           </div>
         </div>
 
+        {/* Right side - form */}
         <Card style={{ padding: "2rem", boxShadow: "var(--shadow-md)" }}>
           <h1 style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>{mode === "signup" ? "Create Account" : "Welcome Back"}</h1>
           <p style={{ color: "var(--text)", marginBottom: "1.5rem" }}>{mode === "signup" ? "Sign up to start using Qwikko" : "Log in to manage your links"}</p>
+
           <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
           <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "signup" ? "new-password" : "current-password"} />
+
           {error && <Alert type="error">{error}</Alert>}
           {message && <Alert type="success">{message}</Alert>}
-          <Button onClick={handleEmailAuth} variant="primary" disabled={loading} style={{ width: "100%", marginTop: "1rem" }}>{loading ? "Please wait..." : mode === "signup" ? "Sign Up" : "Sign In"}</Button>
+
+          <Button onClick={handleEmailAuth} variant="primary" disabled={loading} style={{ width: "100%", marginTop: "1rem" }}>
+            {loading ? "Please wait..." : mode === "signup" ? "Sign Up" : "Sign In"}
+          </Button>
+
           <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginTop: "1rem", color: "var(--text)" }}>
             <span>{mode === "signup" ? "Already have an account?" : "Need an account?"}</span>
-            <a onClick={() => setMode(mode === "signup" ? "signin" : "signup")} style={{ cursor: "pointer", color: "var(--primary)", fontWeight: "600" }}>{mode === "signup" ? "Sign in" : "Sign up"}</a>
+            <a onClick={() => setMode(mode === "signup" ? "signin" : "signup")} style={{ cursor: "pointer", color: "var(--primary)", fontWeight: "600" }}>
+              {mode === "signup" ? "Sign in" : "Sign up"}
+            </a>
           </div>
+
           <hr style={{ margin: "1.5rem 0", border: "none", borderTop: "1px solid var(--border)" }} />
+
           <Button onClick={handleGoogleAuth} variant="secondary" disabled={loading} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
             <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M24 9.5C27.5 9.5 30.7 10.8 33.1 13.2L38.7 7.6C34.6 3.9 29.6 2 24 2C14.9 2 7.1 7.6 3.5 15.4L9.9 20.3C12.3 14.3 17.7 9.5 24 9.5Z" fill="#EA4335" />
@@ -77,21 +115,8 @@ function LoginContent() {
             </svg>
             {loading ? "Redirecting..." : "Continue with Google"}
           </Button>
-          {manualUrl && (
-            <p style={{ marginTop: "1rem", textAlign: "center" }}>
-              <a href={manualUrl} style={{ color: "var(--primary)", fontWeight: "600" }}>Tap here if not redirected automatically</a>
-            </p>
-          )}
         </Card>
       </div>
     </main>
   );
-}
-
-export default function Login() {
-  return (
-    <Suspense fallback={<div style={{ textAlign: "center", padding: "4rem" }}>Loading...</div>}>
-      <LoginContent />
-    </Suspense>
-  );
-  }
+        }
