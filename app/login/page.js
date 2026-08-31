@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { Button, Card, Input, Alert } from "../components/ui";
@@ -12,6 +12,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [debug, setDebug] = useState(""); // Optional: shows last action
   const router = useRouter();
 
   async function handleEmailAuth() {
@@ -37,7 +38,9 @@ export default function Login() {
 
   async function handleGoogleAuth() {
     setError("");
+    setDebug("Starting Google sign-in...");
     setLoading(true);
+
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -45,24 +48,33 @@ export default function Login() {
           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
         }
       });
+
       if (error) {
         console.error("OAuth error:", error);
         setError(error.message || "Google sign-in failed. Check provider settings.");
         setLoading(false);
         return;
       }
-      // ✅ Crucial: Manually redirect if the library returns a URL
+
       if (data?.url) {
-        console.log("Redirecting to:", data.url);
-        window.location.href = data.url;
+        setDebug(`Redirecting to: ${data.url}`);
+        // Use assign instead of href for better compatibility
+        window.location.assign(data.url);
+        // Set a timeout in case redirect doesn't happen (some browsers block)
+        setTimeout(() => {
+          if (window.location.pathname === "/login") { // still on login
+            setError("Redirect didn't happen. Tap the link below to continue.");
+            setDebug(`Manual link: ${data.url}`);
+            setLoading(false);
+          }
+        }, 5000);
       } else {
-        // Some versions auto-redirect; if not, show error
-        setError("Redirect failed. No URL returned. Check browser console.");
+        setError("No redirect URL returned. Check Google provider setup.");
         setLoading(false);
       }
     } catch (err) {
       console.error("Unexpected error:", err);
-      setError("Unexpected error. Please try again.");
+      setError("Unexpected error: " + err.message);
       setLoading(false);
     }
   }
@@ -91,6 +103,7 @@ export default function Login() {
 
           {error && <Alert type="error">{error}</Alert>}
           {message && <Alert type="success">{message}</Alert>}
+          {debug && <p style={{ color: "var(--text)", fontSize: "0.85rem", marginTop: "0.5rem" }}>{debug}</p>}
 
           <Button onClick={handleEmailAuth} variant="primary" disabled={loading} style={{ width: "100%", marginTop: "1rem" }}>
             {loading ? "Please wait..." : mode === "signup" ? "Sign Up" : "Sign In"}
@@ -114,8 +127,16 @@ export default function Login() {
             </svg>
             {loading ? "Redirecting..." : "Continue with Google"}
           </Button>
+
+          {debug && data?.url && (
+            <p style={{ marginTop: "1rem", textAlign: "center" }}>
+              <a href={debug.split(": ")[1]} target="_blank" rel="noopener noreferrer" style={{ color: "var(--primary)", fontWeight: "600" }}>
+                Click here if not redirected automatically
+              </a>
+            </p>
+          )}
         </Card>
       </div>
     </main>
   );
-}
+          }
