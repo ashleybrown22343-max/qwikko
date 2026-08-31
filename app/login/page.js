@@ -54,18 +54,35 @@ export default function Login() {
 
   // Handle Google OAuth
   async function handleGoogleAuth() {
-    setError("");
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
+  setError("");
+  setLoading(true);
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
       },
     });
     if (error) {
+      console.error("OAuth Error:", error);
       setError(error.message);
       setLoading(false);
+      return;
     }
+    // If data.url is returned, redirect manually (some versions don't auto-redirect)
+    if (data?.url) {
+      window.location.href = data.url;
+    } else {
+      // Fallback: assume it's redirecting automatically
+      // (but if not, we'll show a message)
+      setError("Redirect failed. Please check your browser settings.");
+      setLoading(false);
+    }
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    setError("An unexpected error occurred. Please try again.");
+    setLoading(false);
+  }
   }
 
   return (
