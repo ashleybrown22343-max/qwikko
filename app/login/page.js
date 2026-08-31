@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { Button, Card, Input, Alert } from "../../components/ui";
+import { Button, Card, Input, Alert } from "../components/ui";
 
 function LoginContent() {
   const [mode, setMode] = useState("signin");
