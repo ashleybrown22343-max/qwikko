@@ -1,19 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { Button, Card, Input, Alert } from "../components/ui";
 
-export default function Login() {
+function LoginContent() {
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [debug, setDebug] = useState(""); // Optional: shows last action
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Read error from URL (e.g., /login?error=missing_code)
+  useEffect(() => {
+    const urlError = searchParams.get("error");
+    if (urlError === "missing_code") {
+      setError("Authentication was interrupted. Please try again.");
+    } else if (urlError === "auth_failed") {
+      setError("Google sign-in failed. Please try again.");
+    } else if (urlError === "server_error") {
+      setError("Server error during sign-in. Please try again.");
+    }
+  }, [searchParams]);
 
   async function handleEmailAuth() {
     setError("");
@@ -38,7 +50,7 @@ export default function Login() {
 
   async function handleGoogleAuth() {
     setError("");
-    setDebug("Starting Google sign-in...");
+    setMessage("");
     setLoading(true);
 
     try {
@@ -50,30 +62,19 @@ export default function Login() {
       });
 
       if (error) {
-        console.error("OAuth error:", error);
-        setError(error.message || "Google sign-in failed. Check provider settings.");
+        setError(error.message || "Google sign-in failed.");
         setLoading(false);
         return;
       }
 
       if (data?.url) {
-        setDebug(`Redirecting to: ${data.url}`);
-        // Use assign instead of href for better compatibility
-        window.location.assign(data.url);
-        // Set a timeout in case redirect doesn't happen (some browsers block)
-        setTimeout(() => {
-          if (window.location.pathname === "/login") { // still on login
-            setError("Redirect didn't happen. Tap the link below to continue.");
-            setDebug(`Manual link: ${data.url}`);
-            setLoading(false);
-          }
-        }, 5000);
+        // Use replace to prevent going back to login page
+        window.location.replace(data.url);
       } else {
         setError("No redirect URL returned. Check Google provider setup.");
         setLoading(false);
       }
     } catch (err) {
-      console.error("Unexpected error:", err);
       setError("Unexpected error: " + err.message);
       setLoading(false);
     }
@@ -103,7 +104,6 @@ export default function Login() {
 
           {error && <Alert type="error">{error}</Alert>}
           {message && <Alert type="success">{message}</Alert>}
-          {debug && <p style={{ color: "var(--text)", fontSize: "0.85rem", marginTop: "0.5rem" }}>{debug}</p>}
 
           <Button onClick={handleEmailAuth} variant="primary" disabled={loading} style={{ width: "100%", marginTop: "1rem" }}>
             {loading ? "Please wait..." : mode === "signup" ? "Sign Up" : "Sign In"}
@@ -127,16 +127,16 @@ export default function Login() {
             </svg>
             {loading ? "Redirecting..." : "Continue with Google"}
           </Button>
-
-          {debug && data?.url && (
-            <p style={{ marginTop: "1rem", textAlign: "center" }}>
-              <a href={debug.split(": ")[1]} target="_blank" rel="noopener noreferrer" style={{ color: "var(--primary)", fontWeight: "600" }}>
-                Click here if not redirected automatically
-              </a>
-            </p>
-          )}
         </Card>
       </div>
     </main>
   );
-          }
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: "center", padding: "4rem" }}>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
+  );
+    }
