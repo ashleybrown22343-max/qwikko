@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { Button, Card, Input, Alert } from "../components/ui";
+import { Button, Card, Input, Alert } from "../../components/ui";
 
 export default function Login() {
   const [mode, setMode] = useState("signin");
@@ -14,160 +14,98 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Handle email/password auth
   async function handleEmailAuth() {
     setError("");
     setMessage("");
     setLoading(true);
-
     if (!email || !password) {
       setError("Enter both email and password.");
       setLoading(false);
       return;
     }
-
     if (mode === "signup") {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (signUpError) {
-        setError(signUpError.message);
-        setLoading(false);
-        return;
-      }
+      const { error: signUpError } = await supabase.auth.signUp({ email, password });
+      if (signUpError) { setError(signUpError.message); setLoading(false); return; }
       setMessage("Check your email to confirm your account.");
       setLoading(false);
     } else {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (signInError) {
-        setError(signInError.message);
-        setLoading(false);
-        return;
-      }
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) { setError(signInError.message); setLoading(false); return; }
       router.push("/dashboard");
     }
   }
 
-  // Handle Google OAuth
   async function handleGoogleAuth() {
-  setError("");
-  setLoading(true);
-  try {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
-      },
-    });
-    if (error) {
-      console.error("OAuth Error:", error);
-      setError(error.message);
+    setError("");
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
+        }
+      });
+      if (error) {
+        console.error("OAuth error:", error);
+        setError(error.message || "Google sign-in failed. Check provider settings.");
+        setLoading(false);
+        return;
+      }
+      // ✅ Crucial: Manually redirect if the library returns a URL
+      if (data?.url) {
+        console.log("Redirecting to:", data.url);
+        window.location.href = data.url;
+      } else {
+        // Some versions auto-redirect; if not, show error
+        setError("Redirect failed. No URL returned. Check browser console.");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      setError("Unexpected error. Please try again.");
       setLoading(false);
-      return;
     }
-    // If data.url is returned, redirect manually (some versions don't auto-redirect)
-    if (data?.url) {
-      window.location.href = data.url;
-    } else {
-      // Fallback: assume it's redirecting automatically
-      // (but if not, we'll show a message)
-      setError("Redirect failed. Please check your browser settings.");
-      setLoading(false);
-    }
-  } catch (err) {
-    console.error("Unexpected error:", err);
-    setError("An unexpected error occurred. Please try again.");
-    setLoading(false);
-  }
   }
 
   return (
     <main className="container" style={{ minHeight: "calc(100vh - 60px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem 1rem" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem", maxWidth: "900px", width: "100%" }}>
-        {/* Left side - Brand info (hidden on mobile) */}
+        {/* Left side */}
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "2rem", background: "var(--primary)", borderRadius: "12px", color: "white" }}>
-          <h2 style={{ color: "white", fontSize: "2rem", marginBottom: "1rem" }}>
-            Qwikko
-          </h2>
-          <p style={{ fontSize: "1.1rem", opacity: "0.9", marginBottom: "2rem" }}>
-            QR codes & smart links with powerful analytics.
-          </p>
+          <h2 style={{ color: "white", fontSize: "2rem", marginBottom: "1rem" }}>Qwikko</h2>
+          <p style={{ fontSize: "1.1rem", opacity: "0.9", marginBottom: "2rem" }}>QR codes & smart links with powerful analytics.</p>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "1.2rem" }}>✓</span>
-              <span>Branded short links</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "1.2rem" }}>✓</span>
-              <span>Real-time click analytics</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ fontSize: "1.2rem" }}>✓</span>
-              <span>Customizable QR codes</span>
-            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><span style={{ fontSize: "1.2rem" }}>✓</span><span>Branded short links</span></div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><span style={{ fontSize: "1.2rem" }}>✓</span><span>Real-time click analytics</span></div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><span style={{ fontSize: "1.2rem" }}>✓</span><span>Customizable QR codes</span></div>
           </div>
         </div>
 
-        {/* Right side - Auth form */}
+        {/* Right side - form */}
         <Card style={{ padding: "2rem", boxShadow: "var(--shadow-md)" }}>
-          <h1 style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>
-            {mode === "signup" ? "Create Account" : "Welcome Back"}
-          </h1>
-          <p style={{ color: "var(--text)", marginBottom: "1.5rem" }}>
-            {mode === "signup" ? "Sign up to start using Qwikko" : "Log in to manage your links"}
-          </p>
+          <h1 style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>{mode === "signup" ? "Create Account" : "Welcome Back"}</h1>
+          <p style={{ color: "var(--text)", marginBottom: "1.5rem" }}>{mode === "signup" ? "Sign up to start using Qwikko" : "Log in to manage your links"}</p>
 
-          <Input
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-          />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={mode === "signup" ? "new-password" : "current-password"}
-          />
+          <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "signup" ? "new-password" : "current-password"} />
 
           {error && <Alert type="error">{error}</Alert>}
           {message && <Alert type="success">{message}</Alert>}
 
-          <Button
-            onClick={handleEmailAuth}
-            variant="primary"
-            disabled={loading}
-            style={{ width: "100%", marginTop: "1rem" }}
-          >
+          <Button onClick={handleEmailAuth} variant="primary" disabled={loading} style={{ width: "100%", marginTop: "1rem" }}>
             {loading ? "Please wait..." : mode === "signup" ? "Sign Up" : "Sign In"}
           </Button>
 
           <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem", marginTop: "1rem", color: "var(--text)" }}>
             <span>{mode === "signup" ? "Already have an account?" : "Need an account?"}</span>
-            <a
-              onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-              style={{ cursor: "pointer", color: "var(--primary)", fontWeight: "600" }}
-            >
+            <a onClick={() => setMode(mode === "signup" ? "signin" : "signup")} style={{ cursor: "pointer", color: "var(--primary)", fontWeight: "600" }}>
               {mode === "signup" ? "Sign in" : "Sign up"}
             </a>
           </div>
 
           <hr style={{ margin: "1.5rem 0", border: "none", borderTop: "1px solid var(--border)" }} />
 
-          <Button
-            onClick={handleGoogleAuth}
-            variant="secondary"
-            disabled={loading}
-            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
-          >
+          <Button onClick={handleGoogleAuth} variant="secondary" disabled={loading} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
             <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M24 9.5C27.5 9.5 30.7 10.8 33.1 13.2L38.7 7.6C34.6 3.9 29.6 2 24 2C14.9 2 7.1 7.6 3.5 15.4L9.9 20.3C12.3 14.3 17.7 9.5 24 9.5Z" fill="#EA4335" />
               <path d="M46.5 24.3C46.5 22.8 46.4 21.3 46.1 20H24V28.8H36.4C35.7 32.2 33.5 35 30.6 36.8L36.3 42C43.2 38.1 46.5 31.6 46.5 24.3Z" fill="#4285F4" />
