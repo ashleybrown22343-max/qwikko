@@ -53,18 +53,18 @@ export default function Login() {
   }
 
   async function handleGoogleAuth() {
-    setError("");
-    setLoading(true);
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-    if (oauthError) {
-      setError(oauthError.message);
-      setLoading(false);
+  setError("")
+  setLoading(true)
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`
     }
+  })
+  if (error) {
+    setError(error.message)
+    setLoading(false)
+  }
   }
 
   return (
