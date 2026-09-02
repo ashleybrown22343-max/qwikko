@@ -1,6 +1,7 @@
 // app/layout.js
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import AdBanner from "./components/AdBanner";
 
 export const metadata = {
   title: "Qwikko — QR + Smart Link Toolkit",
@@ -13,6 +14,7 @@ export default function RootLayout({ children }) {
       <body>
         <Navbar />
         {children}
+        <AdBanner />
       </body>
     </html>
   );
