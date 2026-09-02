@@ -6,7 +6,7 @@ import Script from "next/script";
 export const metadata = {
   title: "Qwikko — QR + Smart Link Toolkit",
   description: "Free QR codes and branded smart links for businesses and creators.",
-  // Monetag meta tag (if needed, keep it)
+  // Monetag meta tag (for verification)
   other: {
     "monetag": "1381bcbe815876b5e01b652e71955dbd",
   },
@@ -16,7 +16,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* Monetag Meta Tag (for verification) */}
         <meta name="monetag" content="1381bcbe815876b5e01b652e71955dbd" />
       </head>
       <body>
@@ -41,6 +40,14 @@ export default function RootLayout({ children }) {
           src="https://n6wxm.com/vignette.min.js"
           strategy="afterInteractive"
           data-zone="11710549"
+        />
+
+        {/* NEW Monetag Zone 11710701 (Social Bar / Banner) */}
+        <Script
+          src="https://5gvci.com/act/files/tag.min.js?z=11710701"
+          strategy="afterInteractive"
+          data-cfasync="false"
+          async
         />
       </body>
     </html>
