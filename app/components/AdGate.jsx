@@ -25,9 +25,7 @@ export default function AdGate({ onComplete, children }) {
 
   useEffect(() => {
     if (showAd && canCancel) {
-      const timeout = setTimeout(() => {
-        handleCancel();
-      }, 10000);
+      const timeout = setTimeout(() => handleCancel(), 10000);
       return () => clearTimeout(timeout);
     }
   }, [showAd, canCancel]);
@@ -35,12 +33,15 @@ export default function AdGate({ onComplete, children }) {
   useEffect(() => {
     if (showAd && adContainerRef.current) {
       const container = adContainerRef.current;
-      container.innerHTML = "";
-      const script = document.createElement("script");
-      script.async = true;
-      script.setAttribute("data-cfasync", "false");
-      script.src = "https://underminestudiedboot.com/025fb75007f85066894958fdd706a051/invoke.js";
-      container.appendChild(script);
+      
+      // 🚀 THE BULLETPROOF INJECTION METHOD (dangerouslySetInnerHTML)
+      // This bypasses React entirely and gives Adsterra exactly what it wants.
+      const adHTML = `
+        <div id="container-025fb75007f85066894958fdd706a051"></div>
+        <script async="async" data-cfasync="false" src="https://underminestudiedboot.com/025fb75007f85066894958fdd706a051/invoke.js"><\/script>
+      `;
+      
+      container.innerHTML = adHTML;
     }
   }, [showAd]);
 
@@ -63,12 +64,30 @@ export default function AdGate({ onComplete, children }) {
       {showAd && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "#ffffff", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", padding: "1rem", boxSizing: "border-box" }}>
           <h2 style={{ margin: "1rem 0", fontSize: "1.2rem", color: "var(--navy)" }}>Advertisement</h2>
-          <div id="container-025fb75007f85066894958fdd706a051" ref={adContainerRef} style={{ width: "100%", maxWidth: "400px", flexGrow: 1, background: "#f8fafc", overflow: "hidden", borderRadius: "8px" }} />
+          
+          {/* The container that will directly receive the raw HTML */}
+          <div 
+            ref={adContainerRef}
+            style={{ width: "100%", maxWidth: "400px", flexGrow: 1, background: "#f8fafc", overflow: "hidden", borderRadius: "8px" }} 
+          />
+          
           <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
             {!canCancel ? (
               <p style={{ color: "var(--text)" }}>Please wait... {countdown}s</p>
             ) : (
-              <button onClick={handleCancel} style={{ background: "var(--primary)", color: "white", border: "none", padding: "0.8rem 2.5rem", borderRadius: "8px", cursor: "pointer", fontSize: "1rem", fontWeight: "bold" }}>
+              <button 
+                onClick={handleCancel} 
+                style={{ 
+                  background: "var(--primary)", 
+                  color: "white", 
+                  border: "none", 
+                  padding: "0.8rem 2.5rem", 
+                  borderRadius: "8px", 
+                  cursor: "pointer", 
+                  fontSize: "1rem",
+                  fontWeight: "bold"
+                }}
+              >
                 Skip Ad
               </button>
             )}
@@ -77,4 +96,4 @@ export default function AdGate({ onComplete, children }) {
       )}
     </>
   );
-  }
+          }
