@@ -187,11 +187,11 @@ export default function Generate() {
         {processingStage && <Alert type="success" style={{ marginTop: "1rem" }}>{processingStage}</Alert>}
 
         <div style={{ marginTop: "1.5rem" }}>
-          <AdGate onComplete={generate} zoneId="11710549" sdkName="show_11710549">
-            <Button variant="primary" disabled={loading} style={{ width: "100%" }}>
-              {loading ? "Processing..." : "Generate QR Code"}
-            </Button>
-          </AdGate>
+          <AdGate onComplete={generate}>
+  <Button variant="primary" disabled={loading} style={{ width: "100%" }}>
+    {loading ? "Processing..." : "Generate QR Code"}
+  </Button>
+</AdGate>
         </div>
       </Card>
 
