@@ -98,7 +98,7 @@ export default function CreateLink() {
         {error && <Alert type="error">{error}</Alert>}
 
         <div style={{ marginTop: "1rem" }}>
-          <AdGate onComplete={generate}>
+          <AdGate onComplete={create}>
   <Button>...</Button>
 </AdGate>
         </div>
