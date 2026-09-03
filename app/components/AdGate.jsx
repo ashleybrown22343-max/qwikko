@@ -1,96 +1,70 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
-export default function AdGate({ onComplete, zoneId, sdkName, children }) {
+export default function AdGate({ onComplete, children }) {
   const [isAdShowing, setIsAdShowing] = useState(false);
-  const [hasShown, setHasShown] = useState(false);
-  const adsterraContainerRef = useRef(null);
+  const [hasShown, setHasShown] = useState(false); // Reset this after each action
+  const adContainerRef = useRef(null);
 
-  useEffect(() => {
-    // Inject Monetag script once
-    if (!window[sdkName] && typeof window !== "undefined") {
-      const script = document.createElement("script");
-      script.src = "https://n6wxm.com/vignette.min.js";
-      script.dataset.zone = zoneId;
-      script.async = true;
-      document.body.appendChild(script);
+  const runInPagePush = () => {
+    setIsAdShowing(true);
+    
+    // Clear previous container if it exists
+    if (adContainerRef.current) {
+      adContainerRef.current.innerHTML = "";
     }
-  }, [zoneId, sdkName]);
+
+    // Create a fixed div at the top for the ad (non-intrusive)
+    const tempDiv = document.createElement("div");
+    tempDiv.style.position = "fixed";
+    tempDiv.style.top = "0";
+    tempDiv.style.left = "0";
+    tempDiv.style.width = "100%";
+    tempDiv.style.zIndex = "99999";
+    tempDiv.style.background = "white";
+    tempDiv.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+    tempDiv.style.padding = "0";
+    document.body.appendChild(tempDiv);
+    adContainerRef.current = tempDiv;
+
+    // Inject your exact Monetag In-Page Push script
+    const script = document.createElement("script");
+    script.src = "https://nap5k.com/tag.min.js";
+    script.dataset.zone = "11710551";
+    script.async = true;
+    tempDiv.appendChild(script);
+
+    // Give the ad 5 seconds to fully display
+    setTimeout(() => {
+      finish();
+    }, 5000);
+  };
 
   const finish = () => {
     setIsAdShowing(false);
+    if (adContainerRef.current) {
+      adContainerRef.current.remove();
+      adContainerRef.current = null;
+    }
+    setHasShown(false); // ✅ Reset so it shows again on the next action
     onComplete();
   };
 
-  const runFallbackAdsterra = () => {
-    // If no container, just finish
-    if (!adsterraContainerRef.current) {
-      finish();
-      return;
-    }
-
-    // Inject Adsterra Invoke script
-    const s = document.createElement("script");
-    s.src = "https://www.highrevenueformat.com/3387ce4d21845990330977e5f740977a/invoke.js";
-    s.async = true;
-    adsterraContainerRef.current.appendChild(s);
-
-    // Give the fallback ad 5 seconds to show, then proceed
-    setTimeout(() => finish(), 5000);
-  };
-
-  const attemptMonetag = () => {
-    if (window[sdkName]) {
-      // Add a timeout in case it hangs
-      const timeout = setTimeout(() => runFallbackAdsterra(), 5000);
-
-      window[sdkName]()
-        .then(() => {
-          clearTimeout(timeout);
-          finish();
-        })
-        .catch(() => {
-          clearTimeout(timeout);
-          runFallbackAdsterra();
-        });
-    } else {
-      runFallbackAdsterra();
-    }
-  };
-
   const handleClick = () => {
-    // Only show once per session
-    if (hasShown || localStorage.getItem("qwikko_ad_shown")) {
-      onComplete();
-      return;
-    }
-
-    localStorage.setItem("qwikko_ad_shown", "true");
-    setHasShown(true);
-    setIsAdShowing(true);
-    
-    // Wait a moment for Monetag SDK to attach if it was just loaded
-    setTimeout(() => attemptMonetag(), 1000);
+    // If the ad is already showing, don't trigger another one
+    if (isAdShowing) return;
+    runInPagePush();
   };
 
   return (
     <>
-      <div onClick={handleClick} style={{ display: "inline-block", width: "100%" }}>
+      <div onClick={handleClick} style={{ width: "100%" }}>
         {children}
       </div>
 
-      {/* Real Ad Overlay (No placeholders, real scripts are injected) */}
+      {/* Dim the background while ad is loading */}
       {isAdShowing && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "#0f172a", zIndex: 9999, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-          
-          {/* Monetag calls its own full-screen */}
-          {!adsterraContainerRef.current && <p style={{ color: "white" }}>Loading Ad...</p>}
-
-          {/* Adsterra Fallback Container */}
-          <div ref={adsterraContainerRef} style={{ width: "320px", height: "50px", background: "#fff", borderRadius: "8px", overflow: "hidden" }} />
-          
-          <p style={{ color: "#94a3b8", marginTop: "20px", fontSize: "0.9rem" }}>Please wait...</p>
-        </div>
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", zIndex: 99998 }} />
       )}
     </>
   );
