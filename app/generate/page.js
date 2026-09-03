@@ -188,9 +188,7 @@ export default function Generate() {
 
         <div style={{ marginTop: "1.5rem" }}>
           <AdGate onComplete={generate}>
-  <Button variant="primary" disabled={loading} style={{ width: "100%" }}>
-    {loading ? "Processing..." : "Generate QR Code"}
-  </Button>
+  <Button>...</Button>
 </AdGate>
         </div>
       </Card>
