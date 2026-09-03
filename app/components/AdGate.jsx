@@ -1,48 +1,61 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 
 export default function AdGate({ onComplete, children }) {
-  const [isAdShowing, setIsAdShowing] = useState(false);
-  const adContainerRef = useRef(null);
+  const [showAd, setShowAd] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const [canCancel, setCanCancel] = useState(false);
 
-  const runAdsterraAd = () => {
-    setIsAdShowing(true);
-    if (adContainerRef.current) {
-      adContainerRef.current.innerHTML = "";
+  // Countdown logic
+  useEffect(() => {
+    if (showAd) {
+      const interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setCanCancel(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
     }
-    const tempDiv = document.createElement("div");
-    tempDiv.style.position = "fixed";
-    tempDiv.style.top = "0";
-    tempDiv.style.left = "0";
-    tempDiv.style.width = "100%";
-    tempDiv.style.zIndex = "99999";
-    tempDiv.style.background = "white";
-    tempDiv.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
-    document.body.appendChild(tempDiv);
-    adContainerRef.current = tempDiv;
+  }, [showAd]);
 
-    const script = document.createElement("script");
-    script.src = "https://pl31145407.profitableratecpmnetwork.com/25/62/2a/25622aa3eb2e34686edc45155c84e026.js";
-    script.async = true;
-    tempDiv.appendChild(script);
-
-    setTimeout(() => {
-      finish();
-    }, 5000);
-  };
-
-  const finish = () => {
-    setIsAdShowing(false);
-    if (adContainerRef.current) {
-      adContainerRef.current.remove();
-      adContainerRef.current = null;
+  // Auto-proceed after 10 seconds of the button being active
+  useEffect(() => {
+    if (showAd && canCancel) {
+      const timeout = setTimeout(() => {
+        handleCancel();
+      }, 10000);
+      return () => clearTimeout(timeout);
     }
-    onComplete();
-  };
+  }, [showAd, canCancel]);
+
+  // Inject the Native Ad script when overlay opens
+  useEffect(() => {
+    if (showAd) {
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = "https://pl31157366.profitableratecpmnetwork.com/025fb75007f85066894958fdd706a051/invoke.js";
+      document.getElementById("ad-gate-container").appendChild(script);
+    }
+  }, [showAd]);
 
   const handleClick = () => {
-    if (isAdShowing) return;
-    runAdsterraAd();
+    if (showAd) return;
+    setShowAd(true);
+    setCountdown(5);
+    setCanCancel(false);
+  };
+
+  const handleCancel = () => {
+    setShowAd(false);
+    // Remove the ad container so it resets for next time
+    const container = document.getElementById("ad-gate-container");
+    if (container) container.innerHTML = "";
+    onComplete();
   };
 
   return (
@@ -50,9 +63,40 @@ export default function AdGate({ onComplete, children }) {
       <div onClick={handleClick} style={{ width: "100%" }}>
         {children}
       </div>
-      {isAdShowing && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.5)", zIndex: 99998 }} />
+
+      {showAd && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", background: "#ffffff", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", padding: "1rem", boxSizing: "border-box" }}>
+          
+          {/* Ad Header */}
+          <h2 style={{ margin: "1rem 0", fontSize: "1.2rem", color: "var(--navy)" }}>Advertisement</h2>
+          
+          {/* This is where the big Native Ad loads (Black Widow / Football images) */}
+          <div id="ad-gate-container" style={{ width: "100%", maxWidth: "400px", flexGrow: 1, background: "#f8fafc", overflow: "hidden", borderRadius: "8px" }} />
+          
+          {/* Countdown / Skip Button */}
+          <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
+            {!canCancel ? (
+              <p style={{ color: "var(--text)" }}>Please wait... {countdown}s</p>
+            ) : (
+              <button 
+                onClick={handleCancel} 
+                style={{ 
+                  background: "var(--primary)", 
+                  color: "white", 
+                  border: "none", 
+                  padding: "0.8rem 2.5rem", 
+                  borderRadius: "8px", 
+                  cursor: "pointer", 
+                  fontSize: "1rem",
+                  fontWeight: "bold"
+                }}
+              >
+                Skip Ad
+              </button>
+            )}
+          </div>
+        </div>
       )}
     </>
   );
-        }
+    }
