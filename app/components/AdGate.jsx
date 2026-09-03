@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function AdGate({ onComplete, children }) {
   const [showAd, setShowAd] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [canCancel, setCanCancel] = useState(false);
+  const adContainerRef = useRef(null);
 
   // Countdown logic
   useEffect(() => {
@@ -33,13 +34,17 @@ export default function AdGate({ onComplete, children }) {
     }
   }, [showAd, canCancel]);
 
-  // Inject the Native Ad script when overlay opens
+  // Inject the NEW Exact Adsterra Native Banner script
   useEffect(() => {
-    if (showAd) {
+    if (showAd && adContainerRef.current) {
+      const container = adContainerRef.current;
+      container.innerHTML = ""; // Clear previous ad
+
       const script = document.createElement("script");
       script.async = true;
-      script.src = "https://pl31157366.profitableratecpmnetwork.com/025fb75007f85066894958fdd706a051/invoke.js";
-      document.getElementById("ad-gate-container").appendChild(script);
+      script.setAttribute("data-cfasync", "false");
+      script.src = "https://underminestudiedboot.com/025fb75007f85066894958fdd706a051/invoke.js";
+      container.appendChild(script);
     }
   }, [showAd]);
 
@@ -52,10 +57,8 @@ export default function AdGate({ onComplete, children }) {
 
   const handleCancel = () => {
     setShowAd(false);
-    // Remove the ad container so it resets for next time
-    const container = document.getElementById("ad-gate-container");
-    if (container) container.innerHTML = "";
-    onComplete();
+    if (adContainerRef.current) adContainerRef.current.innerHTML = "";
+    onComplete(); // Real action happens here
   };
 
   return (
@@ -70,8 +73,12 @@ export default function AdGate({ onComplete, children }) {
           {/* Ad Header */}
           <h2 style={{ margin: "1rem 0", fontSize: "1.2rem", color: "var(--navy)" }}>Advertisement</h2>
           
-          {/* This is where the big Native Ad loads (Black Widow / Football images) */}
-          <div id="ad-gate-container" style={{ width: "100%", maxWidth: "400px", flexGrow: 1, background: "#f8fafc", overflow: "hidden", borderRadius: "8px" }} />
+          {/* The exact container Adsterra is looking for */}
+          <div 
+            id="container-025fb75007f85066894958fdd706a051" 
+            ref={adContainerRef}
+            style={{ width: "100%", maxWidth: "400px", flexGrow: 1, background: "#f8fafc", overflow: "hidden", borderRadius: "8px" }} 
+          />
           
           {/* Countdown / Skip Button */}
           <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
@@ -99,4 +106,4 @@ export default function AdGate({ onComplete, children }) {
       )}
     </>
   );
-    }
+                }
