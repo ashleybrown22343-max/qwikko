@@ -98,10 +98,8 @@ export default function CreateLink() {
         {error && <Alert type="error">{error}</Alert>}
 
         <div style={{ marginTop: "1rem" }}>
-          <AdGate onComplete={handleCreate}>
-  <Button variant="primary" disabled={loading} style={{ width: "100%" }}>
-    {loading ? "Creating..." : "Create Link"}
-  </Button>
+          <AdGate onComplete={generate}>
+  <Button>...</Button>
 </AdGate>
         </div>
       </Card>
