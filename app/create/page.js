@@ -130,7 +130,7 @@ export default function CreateLink() {
 
         {/* AdGate Wrapper - Shows the big native ad with countdown */}
         <div style={{ marginTop: "1.5rem" }}>
-          <AdGate onComplete={handleCreate}>
+          <AdGate key={adKey} onComplete={handleCreate}>
             <Button variant="primary" disabled={loading} style={{ width: "100%", padding: "1rem", fontSize: "1.05rem" }}>
               {loading ? "Creating your link..." : "Create Link"}
             </Button>
